@@ -1,8 +1,10 @@
+/* eslint-disable comma-dangle */
+/* eslint-disable import/no-cycle */
 import express from "express";
 import { handleSignIn, handlerSignUp } from "./accounts.controller.js";
 import {
   validateUserSignIn,
-  validateUserSignUpDetail,
+  validateUserSignUpDetail
 } from "./accounts.vaidation.js";
 
 const userRoute = express.Router();

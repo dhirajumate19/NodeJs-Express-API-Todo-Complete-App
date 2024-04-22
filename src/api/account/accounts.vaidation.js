@@ -1,12 +1,16 @@
-import { accounts } from "../../../app.js";
+/* eslint-disable comma-dangle */
+/* eslint-disable consistent-return */
+/* eslint-disable import/no-cycle */
+
 import { createResponse } from "../../utilities/responseHandler/createReponse.js";
-//validate email using regex
+import accountModel from "./accounts.model.js";
+// validate email using regex
 const validateEmail = (email) => {
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return regex.test(email);
 };
 
-//validation comman data for user
+// validation comman data for user
 const validateData = (data) => {
   if (!data || data.trim() === 0) {
     return false;
@@ -14,6 +18,7 @@ const validateData = (data) => {
   return true;
 };
 export const validateUserSignUpDetail = (req, res, next) => {
+  // eslint-disable-next-line object-curly-newline
   const { userName, userEmail, userPassword, userGender } = req.body;
 
   if (!validateData(userName)) {
@@ -38,12 +43,29 @@ export const validateUserSignUpDetail = (req, res, next) => {
   next();
 };
 
-export const validateUserSignIn = (req, res, next) => {
+export const validateUserSignIn = async (req, res, next) => {
   const { userEmail, userPassword } = req.body;
 
-  // Extracting existing user emails and passwords for comparison using map
-  const userEmailAlready = accounts.map((account) => account.userEmail);
-  const userPasswordAlready = accounts.map((account) => account.userPassword);
+  if (userEmail && userPassword) {
+    const userMail = await accountModel.findOne({ userEmail });
+    if (userMail) {
+      if (userMail.userPassword !== userPassword) {
+        return res
+          .status(401)
+          .json(createResponse(401, "Email or Password does not match"));
+      }
+    } else {
+      return res
+        .status(401)
+        .json(
+          createResponse(401, "Email or Password does not match with you tried")
+        );
+    }
+  } else {
+    return res
+      .status(401)
+      .json(createResponse(401, "Enter Email or Password "));
+  }
 
   if (!validateData(userEmail) || !validateEmail(userEmail)) {
     return res
@@ -54,17 +76,6 @@ export const validateUserSignIn = (req, res, next) => {
     return res.status(401).json(createResponse(401, "Enter password"));
   }
 
-  // Check if provided email and password match any existing user
-  if (
-    !userEmailAlready.includes(userEmail) ||
-    !userPasswordAlready.includes(userPassword)
-  ) {
-    return res
-      .status(401)
-      .json(
-        createResponse(401, "Email or Password does not match with you tried")
-      );
-  }
   // If validations pass and user is found, proceed to the next middleware
   next();
 };
